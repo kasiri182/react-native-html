@@ -1,0 +1,45 @@
+{
+  "name": "@kasiri182/react-native-html",
+  "version": "0.1.0-beta.0",
+  "description": "Bounded HTML parsing and native content rendering for React Native",
+  "license": "MIT",
+  "author": "kasiri182",
+  "repository": {"type": "git", "url": "git+https://github.com/kasiri182/react-native-html.git"},
+  "homepage": "https://github.com/kasiri182/react-native-html#readme",
+  "bugs": {"url": "https://github.com/kasiri182/react-native-html/issues"},
+  "main": "lib/index.js",
+  "react-native": "src/index.ts",
+  "types": "lib/index.d.ts",
+  "files": ["lib", "src/*.ts", "src/*.tsx", "README.md", "LICENSE", "CHANGELOG.md"],
+  "sideEffects": false,
+  "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/", "tag": "beta"},
+  "engines": {"node": ">=18.18"},
+  "keywords": ["react-native", "html", "native", "rtl", "typescript"],
+  "dependencies": {"htmlparser2": "7.2.0"},
+  "peerDependencies": {
+    "react": ">=18.3 <19",
+    "react-native": ">=0.77 <0.78",
+    "@shopify/flash-list": "^1.8.3"
+  },
+  "devDependencies": {
+    "@react-native/babel-preset": "0.77.3",
+    "@shopify/flash-list": "1.8.3",
+    "@types/jest": "29.5.13",
+    "@types/react": "18.3.12",
+    "@types/react-test-renderer": "18.3.1",
+    "babel-jest": "29.6.3",
+    "jest": "29.6.3",
+    "react": "18.3.1",
+    "react-native": "0.77.3",
+    "react-test-renderer": "18.3.1",
+    "typescript": "5.0.4"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "test": "jest --config jest.config.cjs --runInBand --no-watchman",
+    "verify": "npm run typecheck && npm test && npm run build && node scripts/check-package.cjs",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run verify"
+  }
+}
