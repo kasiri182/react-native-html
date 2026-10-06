@@ -1,8 +1,12 @@
 import React from 'react';
 import renderer, {act} from 'react-test-renderer';
-import {Image, Text, View} from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import {NativeHtml} from '../NativeHtml';
-import {articleHtml, commentHtml} from '../fixtures/samples';
+import {
+  articleHtml,
+  commentHtml,
+  styledMarketTableHtml,
+} from '../fixtures/samples';
 const openUniversalUrl = jest.fn();
 
 function render(
@@ -82,6 +86,37 @@ describe('native HTML rendering', () => {
     const content = JSON.stringify(tree.toJSON());
     expect(content).toContain('3.');
     expect(content).toContain('8.');
+    act(() => tree.unmount());
+  });
+  it('applies the supported table and inline CSS subset', () => {
+    const tree = render(styledMarketTableHtml);
+    const views = tree.root.findAllByType(View);
+    const styles = views.map(node => StyleSheet.flatten(node.props.style));
+    expect(styles).toContainEqual(
+      expect.objectContaining({
+        width: 320,
+        marginTop: 20,
+        marginBottom: 20,
+      }),
+    );
+    expect(styles).toContainEqual(
+      expect.objectContaining({
+        backgroundColor: '#81d8b0',
+        paddingTop: 12,
+        paddingRight: 12,
+        paddingBottom: 12,
+        paddingLeft: 12,
+        borderWidth: 0,
+      }),
+    );
+    const text = tree.root
+      .findAllByType(Text)
+      .find(node => JSON.stringify(node.props.children).includes('طلا'));
+    expect(StyleSheet.flatten(text!.props.style)).toMatchObject({
+      color: '#333',
+      lineHeight: 27,
+      textAlign: 'center',
+    });
     act(() => tree.unmount());
   });
 });

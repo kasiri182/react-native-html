@@ -77,9 +77,12 @@ block images, nested lists with starts/item values, blockquotes, pre/code and si
 Tables scroll horizontally and support bounded colspan; rowspan/browser CSS layout are not
 implemented. Unknown tags preserve children, with no guarantee of original inline layout.
 
-The CSS subset is text-align, direction, bold font-weight, italic font-style and display:none.
-Other remote CSS is ignored so fonts/colors/layout remain consumer-owned. Script, iframe,
-form controls, SVG/math and other active subtrees are dropped. It is not a browser engine.
+The CSS subset is text-align, direction, bold font-weight, italic font-style, display:none,
+color, background-color, padding, margin, line-height, width, border, border-color,
+border-width, border-style and border-collapse. Values are validated and restricted to
+safe colors, pixel lengths and percentage widths; unsupported declarations are ignored.
+Tables support bounded colspan and may scroll horizontally. Script, iframe, form controls,
+SVG/math and other active subtrees are dropped. It is not a browser engine.
 
 ## Development
 

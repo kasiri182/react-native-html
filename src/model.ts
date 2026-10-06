@@ -152,6 +152,53 @@ function createParseSession(length: number) {
   return {parser, result, isStopped: () => stopped};
 }
 
+const colorPattern =
+  /^(?:transparent|#[0-9a-f]{3,8}|rgba?\(\s*(?:\d{1,3}|\d{1,3}%)(?:\s*,\s*(?:\d{1,3}|\d{1,3}%)){2}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\))$/i;
+const lengthPattern = /^(0|(?:\d+(?:\.\d+)?)px)$/;
+const widthPattern = /^(0|(?:\d+(?:\.\d+)?)(?:px|%)?)$/;
+const lineHeightPattern = /^(?:\d+(?:\.\d+)?|(?:\d+(?:\.\d+)?)px)$/;
+
+const safeColor = (value: string) =>
+  colorPattern.test(value) ? value.toLowerCase() : undefined;
+const safeLength = (value: string) =>
+  lengthPattern.test(value) ? value : undefined;
+const safeWidth = (value: string) =>
+  widthPattern.test(value) ? value : undefined;
+
+const parseBox = (value: string, prefix: 'stylePadding' | 'styleMargin') => {
+  const tokens = value.split(/\s+/);
+  if (!tokens.length || tokens.length > 4) {
+    return {};
+  }
+  const values = tokens.map(safeLength);
+  if (values.some(item => !item)) return {};
+  const [top, right = top, bottom = top, left = right] = values;
+  return {
+    [`${prefix}Top`]: top,
+    [`${prefix}Right`]: right,
+    [`${prefix}Bottom`]: bottom,
+    [`${prefix}Left`]: left,
+  };
+};
+
+const parseBorder = (value: string) => {
+  if (value === 'none') {
+    return {styleBorderWidth: '0'};
+  }
+  const parts = value.split(/\s+/);
+  const width = parts.find(safeLength);
+  const style = parts.find(part => ['solid', 'dashed', 'dotted'].includes(part));
+  const color = parts.find(safeColor);
+  if (!width && !style && !color) {
+    return {};
+  }
+  return {
+    ...(width ? {styleBorderWidth: width} : {}),
+    ...(style ? {styleBorderStyle: style} : {}),
+    ...(color ? {styleBorderColor: color} : {}),
+  };
+};
+
 // Deliberately small CSS subset. Never passes arbitrary remote styles to native views.
 function parseInlineStyle(style = ''): Record<string, string> {
   const attrs: Record<string, string> = {};
@@ -186,6 +233,44 @@ function parseInlineStyle(style = ''): Record<string, string> {
     }
     if (name === 'display' && value === 'none') {
       attrs.hidden = 'true';
+    }
+    if (name === 'color') {
+      const color = safeColor(value);
+      if (color) attrs.styleColor = color;
+    }
+    if (name === 'background-color') {
+      const color = safeColor(value);
+      if (color) attrs.styleBackgroundColor = color;
+    }
+    if (name === 'line-height' && lineHeightPattern.test(value)) {
+      attrs.styleLineHeight = value;
+    }
+    if (name === 'width') {
+      const width = safeWidth(value);
+      if (width) attrs.styleWidth = width;
+    }
+    if (name === 'padding') {
+      Object.assign(attrs, parseBox(value, 'stylePadding'));
+    }
+    if (name === 'margin') {
+      Object.assign(attrs, parseBox(value, 'styleMargin'));
+    }
+    if (name === 'border') {
+      Object.assign(attrs, parseBorder(value));
+    }
+    if (name === 'border-width') {
+      const width = safeLength(value);
+      if (width) attrs.styleBorderWidth = width;
+    }
+    if (name === 'border-color') {
+      const color = safeColor(value);
+      if (color) attrs.styleBorderColor = color;
+    }
+    if (name === 'border-style' && ['solid', 'dashed', 'dotted'].includes(value)) {
+      attrs.styleBorderStyle = value;
+    }
+    if (name === 'border-collapse' && ['collapse', 'separate'].includes(value)) {
+      attrs.styleBorderCollapse = value;
     }
   }
   return attrs;

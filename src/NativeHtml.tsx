@@ -7,6 +7,7 @@ import {
   Text,
   TextStyle,
   View,
+  ViewStyle,
 } from 'react-native';
 import {useHtmlDocument} from './useHtmlDocument';
 import {HtmlDocument, HtmlElement, HtmlNode, resolveHtmlUrl} from './model';
@@ -74,6 +75,19 @@ const headingSizes: Record<string, number> = {
 const numeric = (value?: string) => {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : undefined;
+};
+const pixel = (value?: string) => {
+  if (!value) return undefined;
+  const match = /^(\d+(?:\.\d+)?)px$/.exec(value);
+  return match ? Number(match[1]) : value === '0' ? 0 : undefined;
+};
+const dimension = (value: string | undefined, availableWidth: number) => {
+  if (!value) return undefined;
+  if (value.endsWith('%')) {
+    const percent = Number(value.slice(0, -1));
+    return Number.isFinite(percent) ? (availableWidth * percent) / 100 : undefined;
+  }
+  return pixel(value) ?? numeric(value);
 };
 
 const HtmlImage = memo(function HtmlImage({
@@ -170,6 +184,87 @@ export const NativeHtml = memo(function NativeHtml({
     writingDirection: rtl ? 'rtl' : 'ltr',
   };
 
+  const textStyleFor = (attrs: Record<string, string>, inherited: TextStyle) => {
+    const fontSize = typeof inherited.fontSize === 'number' ? inherited.fontSize : size;
+    const lineHeight = attrs.styleLineHeight
+      ? attrs.styleLineHeight.endsWith('px')
+        ? pixel(attrs.styleLineHeight)
+        : Number(attrs.styleLineHeight) * fontSize
+      : undefined;
+    return {
+      ...inherited,
+      ...(attrs.dir === 'rtl' || attrs.dir === 'ltr'
+        ? {
+            writingDirection: attrs.dir,
+            textAlign: attrs.dir === 'rtl' ? 'right' : 'left',
+          }
+        : {}),
+      ...(attrs.textAlign
+        ? {textAlign: attrs.textAlign as TextStyle['textAlign']}
+        : {}),
+      ...(attrs.styleColor ? {color: attrs.styleColor} : {}),
+      ...(attrs.styleBackgroundColor
+        ? {backgroundColor: attrs.styleBackgroundColor}
+        : {}),
+      ...(lineHeight && Number.isFinite(lineHeight) ? {lineHeight} : {}),
+      ...(attrs.bold === 'true'
+        ? {
+            fontWeight: 'bold',
+            fontFamily: theme.boldFontFamily || theme.fontFamily,
+          }
+        : {}),
+      ...(attrs.italic === 'true' ? {fontStyle: 'italic'} : {}),
+    } as TextStyle;
+  };
+
+  const boxStyleFor = (
+    attrs: Record<string, string>,
+    availableWidth: number,
+  ): ViewStyle => ({
+    ...(attrs.styleBackgroundColor
+      ? {backgroundColor: attrs.styleBackgroundColor}
+      : {}),
+    ...(attrs.stylePaddingTop ? {paddingTop: pixel(attrs.stylePaddingTop)} : {}),
+    ...(attrs.stylePaddingRight
+      ? {paddingRight: pixel(attrs.stylePaddingRight)}
+      : {}),
+    ...(attrs.stylePaddingBottom
+      ? {paddingBottom: pixel(attrs.stylePaddingBottom)}
+      : {}),
+    ...(attrs.stylePaddingLeft ? {paddingLeft: pixel(attrs.stylePaddingLeft)} : {}),
+    ...(attrs.styleMarginTop ? {marginTop: pixel(attrs.styleMarginTop)} : {}),
+    ...(attrs.styleMarginRight
+      ? {marginRight: pixel(attrs.styleMarginRight)}
+      : {}),
+    ...(attrs.styleMarginBottom
+      ? {marginBottom: pixel(attrs.styleMarginBottom)}
+      : {}),
+    ...(attrs.styleMarginLeft ? {marginLeft: pixel(attrs.styleMarginLeft)} : {}),
+    ...(attrs.styleWidth || attrs.width
+      ? {width: dimension(attrs.styleWidth || attrs.width, availableWidth)}
+      : {}),
+    ...(attrs.styleBorderWidth
+      ? {borderWidth: pixel(attrs.styleBorderWidth)}
+      : {}),
+    ...(attrs.styleBorderColor ? {borderColor: attrs.styleBorderColor} : {}),
+    ...(attrs.styleBorderStyle
+      ? {borderStyle: attrs.styleBorderStyle as ViewStyle['borderStyle']}
+      : {}),
+  });
+
+  const hasBoxStyle = (attrs: Record<string, string>) =>
+    Object.keys(attrs).some(key =>
+      [
+        'styleBackgroundColor',
+        'stylePaddingTop',
+        'styleMarginTop',
+        'styleWidth',
+        'styleBorderWidth',
+        'styleBorderColor',
+        'styleBorderStyle',
+      ].includes(key),
+    );
+
   const openLink = (url: string) => {
     onLinkPress?.(url);
   };
@@ -235,6 +330,7 @@ export const NativeHtml = memo(function NativeHtml({
         return;
       }
       const {tag, attrs, children} = node;
+      const nextMarks = textStyleFor(attrs, marks);
       if (tag === 'br') {
         runs.push('\n');
         meaningful = true;
@@ -245,7 +341,7 @@ export const NativeHtml = memo(function NativeHtml({
           baseUrl,
         );
         if (!uri) {
-          visit(attrs.alt || '', marks, link);
+          visit(attrs.alt || '', nextMarks, link);
           return;
         }
         const imageWidth = numeric(attrs.width);
@@ -295,7 +391,6 @@ export const NativeHtml = memo(function NativeHtml({
           );
         }
       } else if (inlineTags.has(tag)) {
-        const nextMarks = {...marks};
         if (tag === 'strong' || tag === 'b' || attrs.bold === 'true') {
           nextMarks.fontWeight = 'bold';
           nextMarks.fontFamily = theme.boldFontFamily || theme.fontFamily;
@@ -313,9 +408,6 @@ export const NativeHtml = memo(function NativeHtml({
           nextMarks.fontFamily = theme.codeFontFamily || 'monospace';
           nextMarks.backgroundColor = theme.surface;
         }
-        if (attrs.dir === 'rtl' || attrs.dir === 'ltr') {
-          nextMarks.writingDirection = attrs.dir;
-        }
         const nextLink =
           tag === 'a' ? resolveHtmlUrl(attrs.href, baseUrl) : link;
         children.forEach(child => visit(child, nextMarks, nextLink));
@@ -326,7 +418,7 @@ export const NativeHtml = memo(function NativeHtml({
             node,
             availableWidth,
             `${output.length}`,
-            {...inherited, ...marks},
+            {...inherited, ...nextMarks},
             link,
           ),
         );
@@ -345,32 +437,12 @@ export const NativeHtml = memo(function NativeHtml({
     href?: string,
   ): React.ReactNode {
     const {tag, attrs, children} = node;
-    const direction: TextStyle =
-      attrs.dir === 'rtl' || attrs.dir === 'ltr'
-        ? {
-            writingDirection: attrs.dir,
-            textAlign: attrs.dir === 'rtl' ? 'right' : 'left',
-          }
-        : {};
-    const textStyle: TextStyle = {
-      ...inherited,
-      ...direction,
-      ...(attrs.textAlign
-        ? {textAlign: attrs.textAlign as TextStyle['textAlign']}
-        : {}),
-      ...(attrs.bold === 'true'
-        ? {
-            fontWeight: 'bold',
-            fontFamily: theme.boldFontFamily || theme.fontFamily,
-          }
-        : {}),
-      ...(attrs.italic === 'true' ? {fontStyle: 'italic'} : {}),
-    };
+    const textStyle = inherited;
     if (tag === 'hr') {
       return (
         <View
           key={key}
-          style={[styles.rule, {borderBottomColor: theme.border}]}
+          style={[styles.rule, boxStyleFor(attrs, availableWidth), {borderBottomColor: theme.border}]}
         />
       );
     }
@@ -382,6 +454,7 @@ export const NativeHtml = memo(function NativeHtml({
           key={key}
           style={[
             styles.list,
+            boxStyleFor(attrs, availableWidth),
             node.listFragment &&
               !node.listFragment.first &&
               styles.listContinuation,
@@ -437,11 +510,32 @@ export const NativeHtml = memo(function NativeHtml({
           }
         });
       collect(children);
+      const columnCount = Math.max(
+        1,
+        ...rows.map(row =>
+          row.children.reduce(
+            (count, cell) =>
+              typeof cell !== 'string' && ['td', 'th'].includes(cell.tag)
+                ? count + Math.min(12, numeric(cell.attrs.colspan) || 1)
+                : count,
+            0,
+          ),
+        ),
+      );
+      const tableBox = boxStyleFor(attrs, availableWidth);
+      const tableWidth =
+        dimension(attrs.styleWidth || attrs.width, availableWidth) ||
+        Math.max(availableWidth, columnCount * 120);
+      const columnWidth = tableWidth / columnCount;
+      const collapsed = attrs.styleBorderCollapse === 'collapse';
       return (
-        <ScrollView key={key} horizontal style={styles.table}>
-          <View>
+        <View key={key} style={[styles.table, tableBox]}>
+          <ScrollView horizontal>
+          <View style={{width: tableWidth}}>
             {rows.map((row, rowIndex) => (
-              <View key={rowIndex} style={styles.tableRow}>
+              <View
+                key={rowIndex}
+                style={[styles.tableRow, boxStyleFor(row.attrs, tableWidth)]}>
                 {row.children
                   .filter(
                     (cell): cell is HtmlElement =>
@@ -450,29 +544,69 @@ export const NativeHtml = memo(function NativeHtml({
                   )
                   .map((cell, cellIndex) => {
                     const span = Math.min(12, numeric(cell.attrs.colspan) || 1);
+                    const rowStyle = textStyleFor(row.attrs, textStyle);
+                    const cellStyle = textStyleFor(cell.attrs, rowStyle);
+                    const rowBox = boxStyleFor(row.attrs, tableWidth);
+                    const cellBox = boxStyleFor(cell.attrs, tableWidth);
+                    const cellWidth =
+                      dimension(cell.attrs.styleWidth || cell.attrs.width, tableWidth) ||
+                      columnWidth * span;
+                    const paddingLeft =
+                      typeof cellBox.paddingLeft === 'number'
+                        ? cellBox.paddingLeft
+                        : 8;
+                    const paddingRight =
+                      typeof cellBox.paddingRight === 'number'
+                        ? cellBox.paddingRight
+                        : 8;
+                    const cellBorderWidth =
+                      cellBox.borderWidth ??
+                      rowBox.borderWidth ??
+                      tableBox.borderWidth ??
+                      StyleSheet.hairlineWidth;
                     return (
                       <View
                         key={cellIndex}
-                        style={{
-                          width: 140 * span,
-                          padding: 8,
-                          borderWidth: StyleSheet.hairlineWidth,
-                          borderColor: theme.border,
+                        style={[cellBox, {
+                          width: cellWidth,
+                          paddingTop: cellBox.paddingTop ?? 8,
+                          paddingRight,
+                          paddingBottom: cellBox.paddingBottom ?? 8,
+                          paddingLeft,
+                          borderWidth: cellBorderWidth,
+                          borderColor:
+                            cellBox.borderColor ??
+                            rowBox.borderColor ??
+                            tableBox.borderColor ??
+                            theme.border,
+                          borderStyle:
+                            cellBox.borderStyle ??
+                            rowBox.borderStyle ??
+                            tableBox.borderStyle ??
+                            'solid',
                           backgroundColor:
-                            cell.tag === 'th'
+                            cellBox.backgroundColor ??
+                            rowBox.backgroundColor ??
+                            (cell.tag === 'th'
                               ? theme.surface
-                              : theme.background,
-                        }}>
+                              : theme.background),
+                          ...(collapsed && cellIndex > 0
+                            ? {borderLeftWidth: 0}
+                            : {}),
+                          ...(collapsed && rowIndex > 0
+                            ? {borderTopWidth: 0}
+                            : {}),
+                        }]}>
                         {flow(
                           cell.children,
-                          140 * span - 16,
+                          Math.max(1, cellWidth - paddingLeft - paddingRight),
                           cell.tag === 'th'
                             ? {
-                                ...textStyle,
+                                ...cellStyle,
                                 fontFamily:
                                   theme.boldFontFamily || theme.fontFamily,
                               }
-                            : textStyle,
+                            : cellStyle,
                           href,
                         )}
                       </View>
@@ -481,7 +615,8 @@ export const NativeHtml = memo(function NativeHtml({
               </View>
             ))}
           </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       );
     }
     if (tag === 'pre') {
@@ -511,6 +646,7 @@ export const NativeHtml = memo(function NativeHtml({
           key={key}
           style={[
             styles.quote,
+            boxStyleFor(attrs, availableWidth),
             {
               backgroundColor: theme.surface,
               borderRightWidth: rtl ? 3 : 0,
@@ -528,7 +664,10 @@ export const NativeHtml = memo(function NativeHtml({
         (headingSizes[tag] + fontAdjustment) * scale,
       );
       return (
-        <View key={key} accessibilityRole="header" style={styles.heading}>
+        <View
+          key={key}
+          accessibilityRole="header"
+          style={[styles.heading, boxStyleFor(attrs, availableWidth)]}>
           {flow(
             children,
             availableWidth,
@@ -546,6 +685,22 @@ export const NativeHtml = memo(function NativeHtml({
     }
     // Unknown/container tags preserve children without imposing a native wrapper.
     if (tag !== 'p' && tag !== 'li' && tag !== 'figcaption') {
+      if (hasBoxStyle(attrs)) {
+        const box = boxStyleFor(attrs, availableWidth);
+        const horizontalPadding =
+          (typeof box.paddingLeft === 'number' ? box.paddingLeft : 0) +
+          (typeof box.paddingRight === 'number' ? box.paddingRight : 0);
+        return (
+          <View key={key} style={box}>
+            {flow(
+              children,
+              Math.max(1, availableWidth - horizontalPadding),
+              textStyle,
+              href,
+            )}
+          </View>
+        );
+      }
       return (
         <React.Fragment key={key}>
           {flow(children, availableWidth, textStyle, href)}
@@ -555,7 +710,10 @@ export const NativeHtml = memo(function NativeHtml({
     return (
       <View
         key={key}
-        style={compact ? styles.compactParagraph : styles.paragraph}>
+        style={[
+          compact ? styles.compactParagraph : styles.paragraph,
+          boxStyleFor(attrs, availableWidth),
+        ]}>
         {flow(children, availableWidth, textStyle, href)}
       </View>
     );

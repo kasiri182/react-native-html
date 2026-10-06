@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0-beta.1
+
+- Supports a bounded inline CSS subset for `color`, `background-color`, `padding`,
+  `margin`, `line-height`, `width`, `border`, `border-color`, `border-width`,
+  `border-style`, and `border-collapse`.
+- Applies inherited text styling and supported table styles to native rendering,
+  including table width allocation and collapsed table borders.
+- Adds parser and renderer coverage for a styled RTL market table fixture.
+
 ## 0.1.0-beta.0
 
 Initial beta release candidate. Native Text/View/Image rendering, bounded HTML

@@ -8,3 +8,5 @@ export const articleHtml = `<div><h2>قیمت بیت‌کوین</h2>
 <pre>const n = 1;\n  return n;</pre></div>`;
 export const commentHtml =
   '<p>سلام <strong>دنیا</strong> <a href="/t/topic/1">بیشتر</a> <img class="emoji" src="/images/emoji/smile.png" alt=":smile:"><br>خط بعد</p>';
+
+export const styledMarketTableHtml = `<div style="direction:rtl;color:#333;line-height:1.8"><h2>بازار داخلی</h2><table style="width:100%;border-collapse:collapse;margin:20px 0;border:none;text-align:center"><thead><tr style="background-color:#eeeeee"><th style="padding:12px;border:none">عنوان</th><th style="padding:12px;border:none">قیمت</th></tr></thead><tbody><tr style="background-color:#81d8b0"><td style="padding:12px;border:none">طلا</td><td style="padding:12px;border:none">۲۶٬۶۶۳٬۳۰۰</td></tr></tbody></table></div>`;

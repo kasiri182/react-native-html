@@ -27,6 +27,49 @@ describe('native HTML parser', () => {
       },
     ]);
   });
+  it('normalizes the supported box, color, table and typography styles', () => {
+    const document = parseHtml(
+      '<table style="width:100%;border-collapse:collapse;margin:20px 0;border:none"><tr style="background-color:#81d8b0"><td style="padding:12px;color:#333;line-height:1.8;text-align:center;border:1px solid #eeeeee">price</td></tr></table>',
+    );
+    expect(document.children).toEqual([
+      {
+        tag: 'table',
+        attrs: {
+          styleWidth: '100%',
+          styleBorderCollapse: 'collapse',
+          styleMarginTop: '20px',
+          styleMarginRight: '0',
+          styleMarginBottom: '20px',
+          styleMarginLeft: '0',
+          styleBorderWidth: '0',
+        },
+        children: [
+          {
+            tag: 'tr',
+            attrs: {styleBackgroundColor: '#81d8b0'},
+            children: [
+              {
+                tag: 'td',
+                attrs: {
+                  stylePaddingTop: '12px',
+                  stylePaddingRight: '12px',
+                  stylePaddingBottom: '12px',
+                  stylePaddingLeft: '12px',
+                  styleColor: '#333',
+                  styleLineHeight: '1.8',
+                  textAlign: 'center',
+                  styleBorderWidth: '1px',
+                  styleBorderStyle: 'solid',
+                  styleBorderColor: '#eeeeee',
+                },
+                children: ['price'],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+  });
   beforeEach(clearHtmlCache);
   it('preserves nested content, decodes entities and retains NBSP', () => {
     const doc = parseHtml(articleHtml);

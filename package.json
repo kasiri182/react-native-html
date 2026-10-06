@@ -1,6 +1,6 @@
 {
   "name": "@kasiri182/react-native-html",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0-beta.1",
   "description": "Bounded HTML parsing and native content rendering for React Native",
   "license": "MIT",
   "author": "kasiri182",
