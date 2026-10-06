@@ -1,10 +1,24 @@
 import React from 'react';
 import renderer, {act} from 'react-test-renderer';
-import {Image, Text, View} from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import {NativeHtmlList} from '../NativeHtmlList';
 import {parseHtml} from '../model';
 let mockListProps: any;
 let mockListRenders = 0;
+it('insets body rows symmetrically without adding padding to the header', () => {
+  let tree: renderer.ReactTestRenderer;
+  act(() => {
+    tree = renderer.create(
+      <NativeHtmlList html="<p>body</p>" width={320}
+        contentPaddingHorizontal={15}
+        ListHeaderComponent={<View testID="header" />} />,
+    );
+  });
+  expect(tree!.root.findAllByType(View).map(node => StyleSheet.flatten(node.props.style)))
+    .toContainEqual({paddingHorizontal: 15});
+  expect(tree!.root.findByProps({testID: 'header'}).props.style).toBeUndefined();
+  act(() => tree!.unmount());
+});
 jest.mock('@shopify/flash-list', () => ({
   FlashList: (props: any) => {
     const React = require('react');

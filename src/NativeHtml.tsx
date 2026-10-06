@@ -13,6 +13,8 @@ import {useHtmlDocument} from './useHtmlDocument';
 import {HtmlDocument, HtmlElement, HtmlNode, resolveHtmlUrl} from './model';
 
 export interface NativeHtmlProps {
+  /** Theme mode keeps colors and line height controlled by the consumer. */
+  stylePolicy?: 'theme' | 'source';
   html: string;
   document?: HtmlDocument;
   direction?: 'rtl' | 'ltr';
@@ -165,7 +167,9 @@ export const NativeHtml = memo(function NativeHtml({
   document: suppliedDocument,
   fontSize,
   onImagePress,
+  stylePolicy = 'theme',
 }: NativeHtmlProps) {
+  const useSourceStyles = stylePolicy === 'source';
   const document = useHtmlDocument(html, suppliedDocument);
   const compact = variant === 'compact';
   const rtl = direction === 'rtl';
@@ -186,7 +190,7 @@ export const NativeHtml = memo(function NativeHtml({
 
   const textStyleFor = (attrs: Record<string, string>, inherited: TextStyle) => {
     const fontSize = typeof inherited.fontSize === 'number' ? inherited.fontSize : size;
-    const lineHeight = attrs.styleLineHeight
+    const lineHeight = useSourceStyles && attrs.styleLineHeight
       ? attrs.styleLineHeight.endsWith('px')
         ? pixel(attrs.styleLineHeight)
         : Number(attrs.styleLineHeight) * fontSize
@@ -202,8 +206,8 @@ export const NativeHtml = memo(function NativeHtml({
       ...(attrs.textAlign
         ? {textAlign: attrs.textAlign as TextStyle['textAlign']}
         : {}),
-      ...(attrs.styleColor ? {color: attrs.styleColor} : {}),
-      ...(attrs.styleBackgroundColor
+      ...(useSourceStyles && attrs.styleColor ? {color: attrs.styleColor} : {}),
+      ...(useSourceStyles && attrs.styleBackgroundColor
         ? {backgroundColor: attrs.styleBackgroundColor}
         : {}),
       ...(lineHeight && Number.isFinite(lineHeight) ? {lineHeight} : {}),
@@ -221,7 +225,7 @@ export const NativeHtml = memo(function NativeHtml({
     attrs: Record<string, string>,
     availableWidth: number,
   ): ViewStyle => ({
-    ...(attrs.styleBackgroundColor
+    ...(useSourceStyles && attrs.styleBackgroundColor
       ? {backgroundColor: attrs.styleBackgroundColor}
       : {}),
     ...(attrs.stylePaddingTop ? {paddingTop: pixel(attrs.stylePaddingTop)} : {}),
@@ -246,7 +250,7 @@ export const NativeHtml = memo(function NativeHtml({
     ...(attrs.styleBorderWidth
       ? {borderWidth: pixel(attrs.styleBorderWidth)}
       : {}),
-    ...(attrs.styleBorderColor ? {borderColor: attrs.styleBorderColor} : {}),
+    ...(useSourceStyles && attrs.styleBorderColor ? {borderColor: attrs.styleBorderColor} : {}),
     ...(attrs.styleBorderStyle
       ? {borderStyle: attrs.styleBorderStyle as ViewStyle['borderStyle']}
       : {}),
@@ -255,12 +259,12 @@ export const NativeHtml = memo(function NativeHtml({
   const hasBoxStyle = (attrs: Record<string, string>) =>
     Object.keys(attrs).some(key =>
       [
-        'styleBackgroundColor',
+        ...(useSourceStyles ? ['styleBackgroundColor'] : []),
         'stylePaddingTop',
         'styleMarginTop',
         'styleWidth',
         'styleBorderWidth',
-        'styleBorderColor',
+        ...(useSourceStyles ? ['styleBorderColor'] : []),
         'styleBorderStyle',
       ].includes(key),
     );
@@ -438,11 +442,12 @@ export const NativeHtml = memo(function NativeHtml({
   ): React.ReactNode {
     const {tag, attrs, children} = node;
     const textStyle = inherited;
+    const blockBox = useSourceStyles ? boxStyleFor(attrs, availableWidth) : {};
     if (tag === 'hr') {
       return (
         <View
           key={key}
-          style={[styles.rule, boxStyleFor(attrs, availableWidth), {borderBottomColor: theme.border}]}
+          style={[styles.rule, blockBox, {borderBottomColor: theme.border}]}
         />
       );
     }
@@ -454,7 +459,7 @@ export const NativeHtml = memo(function NativeHtml({
           key={key}
           style={[
             styles.list,
-            boxStyleFor(attrs, availableWidth),
+            blockBox,
             node.listFragment &&
               !node.listFragment.first &&
               styles.listContinuation,
@@ -646,7 +651,7 @@ export const NativeHtml = memo(function NativeHtml({
           key={key}
           style={[
             styles.quote,
-            boxStyleFor(attrs, availableWidth),
+            blockBox,
             {
               backgroundColor: theme.surface,
               borderRightWidth: rtl ? 3 : 0,
@@ -667,7 +672,7 @@ export const NativeHtml = memo(function NativeHtml({
         <View
           key={key}
           accessibilityRole="header"
-          style={[styles.heading, boxStyleFor(attrs, availableWidth)]}>
+          style={[styles.heading, blockBox]}>
           {flow(
             children,
             availableWidth,
@@ -685,7 +690,7 @@ export const NativeHtml = memo(function NativeHtml({
     }
     // Unknown/container tags preserve children without imposing a native wrapper.
     if (tag !== 'p' && tag !== 'li' && tag !== 'figcaption') {
-      if (hasBoxStyle(attrs)) {
+      if (useSourceStyles && hasBoxStyle(attrs)) {
         const box = boxStyleFor(attrs, availableWidth);
         const horizontalPadding =
           (typeof box.paddingLeft === 'number' ? box.paddingLeft : 0) +
@@ -712,7 +717,7 @@ export const NativeHtml = memo(function NativeHtml({
         key={key}
         style={[
           compact ? styles.compactParagraph : styles.paragraph,
-          boxStyleFor(attrs, availableWidth),
+          blockBox,
         ]}>
         {flow(children, availableWidth, textStyle, href)}
       </View>

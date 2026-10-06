@@ -8,7 +8,7 @@ React 18.3 / React Native 0.77 / FlashList 1.8.3. Broader compatibility is not y
 ## Installation
 
 ```sh
-npm install --save-exact @kasiri182/react-native-html@0.1.0-beta.0
+npm install --save-exact @kasiri182/react-native-html@0.1.0-beta.1
 npm install @shopify/flash-list@1.8.3
 ```
 
@@ -71,6 +71,14 @@ URLs reach the callback. Image zoom is the consumer's responsibility.
   threading benefit outweighs conversion/transfer cost for this workload.
 
 ## Supported content
+
+`stylePolicy` defaults to `theme`: HTML colors (text, background and border) and
+line-height are ignored to preserve consumer theme and typography. Use `source`
+explicitly to enable those declarations. Table layout remains enabled in both modes.
+In theme mode, box styling on non-table blocks is also ignored so remote wrappers
+cannot override the consumer's content insets. Table and cell layout remain supported.
+`NativeHtmlList` accepts `contentPaddingHorizontal` for body-only insets; pass a
+renderer `width` matching the list viewport minus twice that padding.
 
 Paragraphs, headings, nested bold/italic/underline/strike/links, line breaks, inline emoji,
 block images, nested lists with starts/item values, blockquotes, pre/code and simple tables.

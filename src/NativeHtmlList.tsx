@@ -27,6 +27,7 @@ export interface NativeHtmlListProps extends NativeHtmlProps {
   ListHeaderComponent?: React.ReactElement | null;
   ListFooterComponent?: React.ReactElement | null;
   estimatedItemSize?: number;
+  contentPaddingHorizontal?: number;
 }
 
 /** Owns the vertical scroll surface. Never nest in a vertical ScrollView. */
@@ -34,6 +35,7 @@ export function NativeHtmlList({
   ListHeaderComponent,
   ListFooterComponent,
   estimatedItemSize = 120,
+  contentPaddingHorizontal = 0,
   ...props
 }: NativeHtmlListProps) {
   const document = useHtmlDocument(props.html, props.document);
@@ -66,14 +68,16 @@ export function NativeHtmlList({
   ).current;
   const renderItem = useCallback(
     ({item}: {item: HtmlDocument}) => (
-      <NativeHtml
-        {...props}
-        html=""
-        document={item}
-        loadImages={visible.has(item)}
-      />
+      <View style={{paddingHorizontal: contentPaddingHorizontal}}>
+        <NativeHtml
+          {...props}
+          html=""
+          document={item}
+          loadImages={visible.has(item)}
+        />
+      </View>
     ),
-    [props, visible],
+    [props, visible, contentPaddingHorizontal],
   );
   return (
     <View style={{flex: 1}}>

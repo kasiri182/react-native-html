@@ -8,6 +8,10 @@
 - Applies inherited text styling and supported table styles to native rendering,
   including table width allocation and collapsed table borders.
 - Adds parser and renderer coverage for a styled RTL market table fixture.
+- Defaults to consumer theme colors and line-height. `stylePolicy: 'source'`
+  explicitly enables HTML colors and non-table box styling.
+- Adds body-only `contentPaddingHorizontal` to NativeHtmlList so article insets
+  can remain symmetric without changing header/footer spacing.
 
 ## 0.1.0-beta.0
 

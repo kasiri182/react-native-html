@@ -39,6 +39,14 @@ function render(
 }
 
 describe('native HTML rendering', () => {
+  it('ignores source box styles on wrappers and paragraphs in theme mode', () => {
+    const tree = render('<div style="width:100px;padding:40px;margin:50px"><p style="width:80px;padding:30px;margin:60px">body</p></div>');
+    const styles = tree.root.findAllByType(View).map(node => StyleSheet.flatten(node.props.style));
+    expect(styles).toContainEqual({marginVertical: 6});
+    expect(JSON.stringify(styles)).not.toContain('padding');
+    expect(JSON.stringify(styles)).not.toContain('marginLeft');
+    act(() => tree.unmount());
+  });
   it('keeps links and emphasis inside paragraphs and divs', () => {
     const tree = render(articleHtml);
     const link = tree.root
@@ -89,7 +97,7 @@ describe('native HTML rendering', () => {
     act(() => tree.unmount());
   });
   it('applies the supported table and inline CSS subset', () => {
-    const tree = render(styledMarketTableHtml);
+    const tree = render(styledMarketTableHtml, {stylePolicy: 'source'});
     const views = tree.root.findAllByType(View);
     const styles = views.map(node => StyleSheet.flatten(node.props.style));
     expect(styles).toContainEqual(
@@ -117,6 +125,25 @@ describe('native HTML rendering', () => {
       lineHeight: 27,
       textAlign: 'center',
     });
+    act(() => tree.unmount());
+  });
+  it('keeps theme colors and typography while retaining table layout by default', () => {
+    const tree = render(styledMarketTableHtml, {
+      theme: {
+        text: '#fafafa', link: '#80bfff', background: '#111111',
+        surface: '#222222', border: '#444444', accent: '#80bfff',
+      },
+    });
+    const content = JSON.stringify(tree.toJSON());
+    expect(content).not.toContain('#81d8b0');
+    expect(content).not.toContain('#333');
+    const text = tree.root.findAllByType(Text)
+      .find(node => JSON.stringify(node.props.children).includes('طلا'));
+    expect(StyleSheet.flatten(text!.props.style)).toMatchObject({
+      color: '#fafafa', lineHeight: 24.75, textAlign: 'center',
+    });
+    expect(tree.root.findAllByType(View).map(node => StyleSheet.flatten(node.props.style)))
+      .toContainEqual(expect.objectContaining({paddingTop: 12, borderWidth: 0}));
     act(() => tree.unmount());
   });
 });
