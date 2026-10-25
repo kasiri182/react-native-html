@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0
+
+- Add React 19 / React Native 0.88 / FlashList 2 compatibility while retaining the React 18 / RN 0.77 / FlashList 1 path.
+- Omit removed estimatedItemSize on FlashList 2; retain caller estimates on FlashList 1.
+- Support readonly React Native style types and use a minimal viewability item contract.
+- Resolve modern React Native type exports with Node16 module resolution.
+
 ## 1.0.0
 
 First stable release. The public API and rendering behavior of `0.1.0-beta.1` are

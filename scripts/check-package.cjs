@@ -11,7 +11,7 @@ const output = execFileSync(
 );
 const [packed] = JSON.parse(output.slice(output.indexOf('[')));
 const paths = packed.files.map(file => file.path);
-const modules = ['index', 'model', 'blocks', 'useHtmlDocument', 'NativeHtml', 'NativeHtmlList'];
+const modules = ['index', 'model', 'blocks', 'useHtmlDocument', 'NativeHtml', 'NativeHtmlList', 'flashListCompat'];
 const expected = new Set(['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md']);
 for (const name of modules) {
   expected.add(`lib/${name}.js`);

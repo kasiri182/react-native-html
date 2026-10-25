@@ -12,6 +12,8 @@ import {
 import {useHtmlDocument} from './useHtmlDocument';
 import {HtmlDocument, HtmlElement, HtmlNode, resolveHtmlUrl} from './model';
 
+type MutableTextStyle = {-readonly [Key in keyof TextStyle]: TextStyle[Key]};
+
 export interface NativeHtmlProps {
   /** Theme mode keeps colors and line height controlled by the consumer. */
   stylePolicy?: 'theme' | 'source';
@@ -334,7 +336,7 @@ export const NativeHtml = memo(function NativeHtml({
         return;
       }
       const {tag, attrs, children} = node;
-      const nextMarks = textStyleFor(attrs, marks);
+      const nextMarks: MutableTextStyle = textStyleFor(attrs, marks);
       if (tag === 'br') {
         runs.push('\n');
         meaningful = true;

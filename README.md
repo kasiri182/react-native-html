@@ -3,18 +3,18 @@
 React Native package for a bounded HTML subset. No application providers,
 navigation, fonts or translated strings are required. `htmlparser2` supplies parsing;
 this package owns the model, cache and native rendering. Tested dependency target:
-React 18.3 / React Native 0.77 / FlashList 1.8.3. Broader compatibility is not yet claimed.
+React 18.3 / React Native 0.77 / FlashList 1.8.3 and React 19.3 / React Native 0.88 / FlashList 2.3.3. Other React Native release lines are not claimed.
 
 ## Installation
 
 ```sh
-npm install --save-exact @kasiri182/react-native-html@1.0.0
-npm install @shopify/flash-list@1.8.3
+npm install --save-exact @kasiri182/react-native-html@1.1.0
+npm install @shopify/flash-list@2.3.3
 ```
 
-Requires React 18.3 and React Native 0.77. Use your application's normal iOS pod
+Supports React 18.3 with React Native 0.77 and FlashList 1, or React 19.3 with React Native 0.88 and FlashList 2. Use your application's normal iOS pod
 installation after adding FlashList. This package contains no custom native module.
-No compatibility claim is made for React 19 or FlashList 2.
+FlashList 2 requires the New Architecture; use FlashList 1 with the older target.
 
 ## Use
 
@@ -42,7 +42,7 @@ import {NativeHtml, NativeHtmlList} from '@kasiri182/react-native-html';
 Use `NativeHtml` inside an existing scrollable screen or comment row. Use `NativeHtmlList`
 as the **only vertical scroll owner** for long documents. Give its parent a bounded height
 (usually `flex: 1`). It accepts `ListHeaderComponent`, `ListFooterComponent` and an
-`estimatedItemSize` hint. Do not nest it inside a vertical ScrollView.
+`estimatedItemSize` hint on FlashList 1 (omitted automatically for FlashList 2). Do not nest it inside a vertical ScrollView.
 
 Optional props: `variant` (rich/compact), `fontSize`, `fontScale`, `fontAdjustment`,
 `theme.fontFamily`, `theme.boldFontFamily`, `theme.codeFontFamily`, `truncatedMessage`.
@@ -119,3 +119,13 @@ content, iOS/Android and font settings still need application-level validation.
 ## License
 
 MIT. See LICENSE.
+
+## 1.1.0 validation
+
+On 2026-10-25, all 52 tests in six suites and the library type check passed on both
+React 18.3.1 / RN 0.77.3 / FlashList 1.8.3 / TypeScript 5.0.4 and
+React 19.3.0 / RN 0.88.0 / FlashList 2.3.3 / TypeScript 6.0.3 (Node 22.13).
+The latter used the RN 0.88 `@react-native/jest-preset` and Babel preset.
+Renderer tests mock list mounting; this does not establish real-device FPS or
+complete iOS/Android rendering acceptance. App-level long articles, tables, images
+and zoom still require device QA.

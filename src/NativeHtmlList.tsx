@@ -1,11 +1,13 @@
 import React, {useCallback, useMemo, useRef, useState} from 'react';
-import {View, ViewToken} from 'react-native';
+import {View} from 'react-native';
 import {FlashList} from '@shopify/flash-list';
+import {flashListSizingProps} from './flashListCompat';
 import {NativeHtml, NativeHtmlProps} from './NativeHtml';
 import {HtmlDocument, HtmlNode} from './model';
 import {splitHtmlBlocks} from './blocks';
 import {useHtmlDocument} from './useHtmlDocument';
 
+const flashListMajor = Number(require('@shopify/flash-list/package.json').version.split('.')[0]);
 const viewabilityConfig = {viewAreaCoveragePercentThreshold: 1};
 // Documents are immutable, like the splitHtmlBlocks cache. Weak keys do not retain
 // old articles. Scan each visited block once, including nested/inline images.
@@ -47,7 +49,7 @@ export function NativeHtmlList({
     () => new Set(),
   );
   const onViewableItemsChanged = useRef(
-    ({viewableItems}: {viewableItems: ViewToken[]}) => {
+    ({viewableItems}: {viewableItems: {item: unknown}[]}) => {
       const next = new Set<HtmlDocument>();
       for (const token of viewableItems) {
         const item = token.item as HtmlDocument;
@@ -85,7 +87,7 @@ export function NativeHtmlList({
         data={blocks}
         renderItem={renderItem}
         keyExtractor={(_, index) => String(index)}
-        estimatedItemSize={estimatedItemSize}
+        {...flashListSizingProps(flashListMajor, estimatedItemSize)}
         drawDistance={250}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
