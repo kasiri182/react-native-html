@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0
+
+First stable release. The public API and rendering behavior of `0.1.0-beta.1` are
+unchanged; this version removes the beta designation.
+
+- Supported dependency target: React 18.3, React Native 0.77, FlashList 1.8.3.
+  Compatibility with React 19, React Native 0.88 or FlashList 2 is not claimed.
+- Bounded HTML subset rendering with native Text/View/Image, RTL support, LRU caching,
+  cooperative parsing of long input and FlashList block virtualization.
+
 ## 0.1.0-beta.1
 
 - Supports a bounded inline CSS subset for `color`, `background-color`, `padding`,

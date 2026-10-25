@@ -1,6 +1,6 @@
 # @kasiri182/react-native-html
 
-Beta React Native package for a bounded HTML subset. No application providers,
+React Native package for a bounded HTML subset. No application providers,
 navigation, fonts or translated strings are required. `htmlparser2` supplies parsing;
 this package owns the model, cache and native rendering. Tested dependency target:
 React 18.3 / React Native 0.77 / FlashList 1.8.3. Broader compatibility is not yet claimed.
@@ -8,7 +8,7 @@ React 18.3 / React Native 0.77 / FlashList 1.8.3. Broader compatibility is not y
 ## Installation
 
 ```sh
-npm install --save-exact @kasiri182/react-native-html@0.1.0-beta.1
+npm install --save-exact @kasiri182/react-native-html@1.0.0
 npm install @shopify/flash-list@1.8.3
 ```
 
@@ -108,7 +108,8 @@ are included in the npm package. Tests and synthetic fixtures stay in Git only.
 ## Release
 
 Run verify, inspect the tarball and test it in a separate React Native consumer
-before publishing. Beta versions use the beta dist-tag, not latest. Changes to
+before publishing. Stable versions publish to the latest dist-tag; prereleases must
+use a prerelease version and a non-latest dist-tag. Changes to
 supported rendering behavior and public APIs must be recorded in CHANGELOG.md.
 
 Performance optimizations require matched Release-device comparisons. Synthetic

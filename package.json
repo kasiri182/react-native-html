@@ -1,6 +1,6 @@
 {
   "name": "@kasiri182/react-native-html",
-  "version": "0.1.0-beta.1",
+  "version": "1.0.0",
   "description": "Bounded HTML parsing and native content rendering for React Native",
   "license": "MIT",
   "author": "kasiri182",
@@ -12,7 +12,7 @@
   "types": "lib/index.d.ts",
   "files": ["lib", "src/*.ts", "src/*.tsx", "README.md", "LICENSE", "CHANGELOG.md"],
   "sideEffects": false,
-  "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/", "tag": "beta"},
+  "publishConfig": {"access": "public", "registry": "https://registry.npmjs.org/"},
   "engines": {"node": ">=18.18"},
   "keywords": ["react-native", "html", "native", "rtl", "typescript"],
   "dependencies": {"htmlparser2": "7.2.0"},
